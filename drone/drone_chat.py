@@ -137,51 +137,34 @@ class DroneAssistant(CodeAgent):
         
         # Add a tool reference guide to help the model use the correct function names
         tool_reference = """
-        IMPORTANT: These tool functions need to be called as shown below:
+        IMPORTANT: These tool functions need to be called EXACTLY as shown below for successful execution:
         
+        # EXAMPLE OF COMPLETE WORKING MISSION:
+        ```python
         # Connect to a drone simulator
         connect_to_real_drone('udp:127.0.0.1:14550')
         
-        # Take off to a specific altitude
-        drone_takeoff(20)
+        # Take off to a specific altitude (always use integer or simple float values)
+        drone_takeoff(30)  # Not 30. 0 or other invalid syntax
         
-        # Land the drone
-        drone_land()
+        # You can define waypoints like this
+        waypoints = [
+            {'lat': 37.7749, 'lon': -122.4194, 'alt': 30},
+            {'lat': 37.7750, 'lon': -122.4195, 'alt': 30}
+        ]
         
-        # Return to home location
+        # Execute mission with waypoints
+        execute_drone_mission(waypoints=waypoints)
+        
+        # Return to home
         drone_return_home()
         
-        # Fly to specific coordinates 
-        drone_fly_to(latitude=37.7749, longitude=-122.4194, altitude=30)
-        
-        # Get current drone location
-        get_drone_location()
-        
-        # Get battery status
-        get_drone_battery()
-        
-        # Execute a mission with waypoints
-        # The waypoints parameter should be a list of dictionaries with 'lat', 'lon', and 'alt' keys.
-        execute_drone_mission(waypoints=[
-            {'lat': 37.7749, 'lon': -122.4194, 'alt': 30},
-            {'lat': 37.7750, 'lon': -122.4195, 'alt': 40}
-        ])
-        
-        # Disconnect from the drone
+        # Always disconnect when done
         disconnect_from_drone()
+        ```
         
-        # Generate a mission plan
-        # mission_type can be: 'survey', 'inspection', 'delivery', or 'custom'
-        generate_mission_plan(mission_type='survey', duration_minutes=20)
-        
-        # Analyze a flight path
-        analyze_flight_path(flight_id='flight_001')
-        
-        # Check sensor readings
-        check_sensor_readings(sensor_name='battery')
-        
-        # Get maintenance recommendations
-        recommend_maintenance(flight_hours=75)
+        NOTE: Each function must be called individually on its own line, with exact parameter names.
+        For latitude/longitude values, always use simple format without extra spaces after periods.
         
         When creating a flight plan, be sure to:
         1. Generate a mission plan with generate_mission_plan()
@@ -274,21 +257,40 @@ class DroneAssistant(CodeAgent):
             # Use the run method directly and capture the output
             import time
             
-            # Execute the run
-            response = self.run(message)
+            # Create an error placeholder
+            error_placeholder = st.empty()
             
-            # Display some feedback about the model thinking completion
-            thinking_placeholder.markdown(tools_reference + """
-            <div style="background-color: #111111; border: 1px dashed #00cc00; border-radius: 5px; padding: 8px; margin-bottom: 10px; color: #00cc00; font-family: monospace; font-size: 12px;">
-            <b>MODEL THINKING:</b> Plan completed! Executing drone operations...
-            </div>
-            """, unsafe_allow_html=True)
+            # Add error handling
+            try:
+                # Execute the run
+                response = self.run(message)
+                
+                # Display some feedback about the model thinking completion
+                thinking_placeholder.markdown(tools_reference + """
+                <div style="background-color: #111111; border: 1px dashed #00cc00; border-radius: 5px; padding: 8px; margin-bottom: 10px; color: #00cc00; font-family: monospace; font-size: 12px;">
+                <b>MODEL THINKING:</b> Plan completed! Executing drone operations...
+                </div>
+                """, unsafe_allow_html=True)
+            except Exception as e:
+                # Display any errors that occur during execution
+                error_message = f"""
+                <div style="background-color: #330000; border: 1px solid #ff0000; border-radius: 5px; padding: 8px; margin-bottom: 10px; color: #ff0000; font-family: monospace; font-size: 12px;">
+                <b>EXECUTION ERROR:</b> {str(e)}<br>
+                Please try again with correct syntax.
+                </div>
+                """
+                error_placeholder.markdown(error_message, unsafe_allow_html=True)
+                response = f"Error executing drone operations: {str(e)}. Please try again with proper syntax for parameters."
+                
+                # Update mission status to show error
+                update_mission_status("ERROR", f"Code execution error: {str(e)}")
             
             # Give a slight delay so users can see the "completed" message
             time.sleep(1)
             
             # Clear the thinking placeholder
             thinking_placeholder.empty()
+            error_placeholder.empty()
             
             return response
         else:

@@ -87,7 +87,7 @@ def show_auth_screen():
     st.markdown("<hr style='border: 1px solid #00ff00; margin: 10px 0;'>", unsafe_allow_html=True)
     
     # Token input with custom styling
-    st.markdown("<h3 style='color: #00ff00; font-family: \"Courier New\", monospace; text-shadow: 0 0 5px #00ff00;'>ENTER AUTHENTICATION TOKEN:</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #00ff00; font-family: \"Courier New\", monospace; text-shadow: 0 0 5px #00ff00;'>ENTER HUGGING FACE AUTHENTICATION TOKEN FOR THE LLM TO RUN:</h3>", unsafe_allow_html=True)
     
     # Create a container with dark background for the input
     st.markdown("<div style='background-color: #0A0A0A; padding: 10px; border-radius: 5px;'>", unsafe_allow_html=True)
