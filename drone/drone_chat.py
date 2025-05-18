@@ -7,11 +7,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import io
 import base64
-from hf_model import HfApiModel
+from .hf_model import HfApiModel
 import time
 # Import compatibility fix for collections.MutableMapping
-import compatibility_fix
-import drone_control  # Import our new drone_control module
+from . import compatibility_fix
+from . import drone_control  # Import our new drone_control module
 
 # Set page config at module level - must be first Streamlit command
 st.set_page_config(
@@ -509,7 +509,7 @@ def create_qwen_model():
         # Return a placeholder model that returns a fixed response
         class PlaceholderModel:
             def __call__(self, *args, **kwargs):
-                from hf_model import Message
+                from .hf_model import Message
                 return Message("Authentication error: No Hugging Face API token provided. Please set an API token to use this feature.")
         return PlaceholderModel()
     

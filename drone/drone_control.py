@@ -6,7 +6,7 @@ This module provides functions for controlling real drones using DroneKit-Python
 import time
 import math
 # Import compatibility fix for collections.MutableMapping
-import compatibility_fix
+from . import compatibility_fix
 from dronekit import connect, VehicleMode, LocationGlobalRelative, Command
 from pymavlink import mavutil
 from typing import Dict, List, Optional, Tuple, Union
