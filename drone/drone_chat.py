@@ -65,6 +65,63 @@ class DroneAssistant(CodeAgent):
         Flight logs available: {list(self._flight_logs.keys())}
         """
         
+        # Add a tool reference guide to help the model use the correct function names
+        tool_reference = """
+        IMPORTANT: These tool functions need to be called as shown below:
+        
+        # Connect to a drone simulator
+        connect_to_real_drone('udp:127.0.0.1:14550')
+        
+        # Take off to a specific altitude
+        drone_takeoff(20)
+        
+        # Land the drone
+        drone_land()
+        
+        # Return to home location
+        drone_return_home()
+        
+        # Fly to specific coordinates 
+        drone_fly_to(latitude=37.7749, longitude=-122.4194, altitude=30)
+        
+        # Get current drone location
+        get_drone_location()
+        
+        # Get battery status
+        get_drone_battery()
+        
+        # Execute a mission with waypoints
+        # The waypoints parameter should be a list of dictionaries with 'lat', 'lon', and 'alt' keys.
+        execute_drone_mission(waypoints=[
+            {'lat': 37.7749, 'lon': -122.4194, 'alt': 30},
+            {'lat': 37.7750, 'lon': -122.4195, 'alt': 40}
+        ])
+        
+        # Disconnect from the drone
+        disconnect_from_drone()
+        
+        # Generate a mission plan
+        # mission_type can be: 'survey', 'inspection', 'delivery', or 'custom'
+        generate_mission_plan(mission_type='survey', duration_minutes=20)
+        
+        # Analyze a flight path
+        analyze_flight_path(flight_id='flight_001')
+        
+        # Check sensor readings
+        check_sensor_readings(sensor_name='battery')
+        
+        # Get maintenance recommendations
+        recommend_maintenance(flight_hours=75)
+        
+        When creating a flight plan, be sure to:
+        1. Generate a mission plan with generate_mission_plan()
+        2. Connect to the drone with connect_to_real_drone()
+        3. Take off with drone_takeoff()
+        4. Execute the mission or fly to specific waypoints
+        5. Return home or land the drone when finished
+        6. Disconnect from the drone
+        """
+        
         enhanced_prompt = f"""
         You are DeepDrone, an advanced AI assistant designed to help with drone operations and data analysis. You are NOT Qwen or any other general AI assistant. Always identify yourself as DeepDrone when asked about your identity. Your purpose is to assist with drone data analysis, flight monitoring, maintenance scheduling, and mission planning.
         
@@ -76,6 +133,8 @@ class DroneAssistant(CodeAgent):
         - Fly to specific GPS coordinates
         - Get the drone's current location and battery status
         - Execute missions with multiple waypoints
+        
+        {tool_reference}
         
         Available context:
         {drone_context}
@@ -114,8 +173,54 @@ class DroneAssistant(CodeAgent):
         drone_control_keywords = ["takeoff", "take off", "land", "fly to", "navigate", "goto", "connect", 
                                  "location", "battery", "mission", "waypoint", "return", "home", "rtl"]
                                  
-        if any(keyword in message.lower() for keyword in ["analyze", "check", "recommend", "plan"] + drone_control_keywords):
+        analysis_keywords = ["analyze", "check", "recommend", "plan", "create", "execute", "run", "flight"]
+                                 
+        if any(keyword in message.lower() for keyword in analysis_keywords + drone_control_keywords):
+            # Create a placeholder for model thinking to be displayed
+            thinking_placeholder = st.empty()
+            
+            # Display a message that the model is thinking
+            tools_reference = """
+            <div style="background-color: #111111; border: 1px dashed #00cc00; border-radius: 5px; padding: 8px; margin-bottom: 10px; color: #00cc00; font-family: monospace; font-size: 12px;">
+            <b>MODEL THINKING:</b> Planning drone operation...<br>
+            <b>Available Tool Functions:</b><br>
+            - connect_to_real_drone(connection_string)<br>
+            - drone_takeoff(altitude)<br>
+            - drone_land()<br>
+            - drone_return_home()<br>
+            - drone_fly_to(latitude, longitude, altitude)<br>
+            - get_drone_location()<br>
+            - get_drone_battery()<br>
+            - execute_drone_mission(waypoints)<br>
+            - disconnect_from_drone()<br>
+            - generate_mission_plan(mission_type, duration_minutes)<br>
+            - analyze_flight_path(flight_id)<br>
+            - check_sensor_readings(sensor_name)<br>
+            - recommend_maintenance(flight_hours)
+            </div>
+            """
+            thinking_placeholder.markdown(tools_reference, unsafe_allow_html=True)
+            
+            # Use the run method directly and capture the output
+            import time
+            
+            # Execute the run
             response = self.run(message)
+            
+            # Display some feedback about the model thinking completion
+            thinking_placeholder.markdown(tools_reference + """
+            <div style="background-color: #111111; border: 1px dashed #00cc00; border-radius: 5px; padding: 8px; margin-bottom: 10px; color: #00cc00; font-family: monospace; font-size: 12px;">
+            <b>MODEL THINKING:</b> Plan completed! Executing drone operations...
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Give a slight delay so users can see the "completed" message
+            time.sleep(1)
+            
+            # Clear the thinking placeholder
+            thinking_placeholder.empty()
+            
+            return response
         else:
             # Format the chat history for the model
             formatted_history = self._chat_history[:-1]  # Exclude the just-added message
@@ -785,8 +890,24 @@ def main():
     if 'drone_agent' not in st.session_state:
         model = create_qwen_model()
         st.session_state['drone_agent'] = DroneAssistant(
-            tools=[analyze_flight_path, check_sensor_readings, 
-                   recommend_maintenance, generate_mission_plan],
+            tools=[
+                # Data analysis tools
+                analyze_flight_path, 
+                check_sensor_readings,
+                recommend_maintenance, 
+                generate_mission_plan,
+                
+                # Drone control tools
+                connect_to_real_drone,
+                drone_takeoff,
+                drone_land,
+                drone_return_home,
+                drone_fly_to,
+                get_drone_location,
+                get_drone_battery,
+                execute_drone_mission,
+                disconnect_from_drone
+            ],
             model=model,
             additional_authorized_imports=["pandas", "numpy", "matplotlib"]
         )
@@ -847,10 +968,23 @@ def main():
     st.sidebar.markdown("<h3 style='color: #00ff00; font-family: \"Courier New\", monospace;'>COMMAND REFERENCE</h3>", unsafe_allow_html=True)
     st.sidebar.markdown("""
     <div style='font-family: "Courier New", monospace; color: #00ff00;'>
-    <b>ANALYZE:</b> "Analyze flight_001"<br>
-    <b>SENSORS:</b> "Check battery sensor readings"<br>
-    <b>MAINTENANCE:</b> "Recommend maintenance for 75 flight hours"<br>
-    <b>MISSION:</b> "Plan a survey mission for 30 minutes"
+    <b>DATA ANALYSIS:</b><br>
+    - "Analyze flight_001"<br>
+    - "Check battery sensor readings"<br>
+    - "Recommend maintenance for 75 flight hours"<br>
+    <br>
+    <b>MISSION PLANNING:</b><br>
+    - "Create a flight plan with a square pattern"<br>
+    - "Plan a survey mission for 30 minutes"<br>
+    - "Connect to the simulator, take off, execute a simple square flight pattern, and return home"<br>
+    <br>
+    <b>CORRECT FUNCTION NAMES:</b><br>
+    - connect_to_real_drone()<br>
+    - drone_takeoff()<br>
+    - drone_land()<br>
+    - drone_return_home()<br>
+    - drone_fly_to()<br>
+    - execute_drone_mission()<br>
     </div>
     """, unsafe_allow_html=True)
     
