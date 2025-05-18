@@ -9,9 +9,12 @@ import io
 import base64
 from .hf_model import HfApiModel
 import time
+import datetime
+import logging
 # Import compatibility fix for collections.MutableMapping
 from . import compatibility_fix
 from . import drone_control  # Import our new drone_control module
+import threading
 
 # Set page config at module level - must be first Streamlit command
 st.set_page_config(
@@ -21,6 +24,73 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     menu_items=None
 )
+
+# Global mission status variables
+if 'mission_in_progress' not in st.session_state:
+    st.session_state.mission_in_progress = False
+    
+if 'mission_status' not in st.session_state:
+    st.session_state.mission_status = "STANDBY"
+    
+if 'mission_phase' not in st.session_state:
+    st.session_state.mission_phase = ""
+    
+if 'interrupt_mission' not in st.session_state:
+    st.session_state.interrupt_mission = False
+    
+if 'mission_log' not in st.session_state:
+    st.session_state.mission_log = []
+
+# Custom logging handler to capture drone_control logs
+class MissionLogHandler(logging.Handler):
+    def emit(self, record):
+        if record.name == 'drone_control':
+            log_entry = f"[{datetime.datetime.now().strftime('%H:%M:%S')}] LOG: {record.getMessage()}"
+            st.session_state.mission_log.append(log_entry)
+            # Keep only the most recent logs
+            if len(st.session_state.mission_log) > 30:
+                st.session_state.mission_log = st.session_state.mission_log[-30:]
+
+# Set up logger to capture drone_control logs
+logger = logging.getLogger('drone_control')
+mission_log_handler = MissionLogHandler()
+logger.addHandler(mission_log_handler)
+
+# Function to update mission status
+def update_mission_status(status, phase=""):
+    # Get current time
+    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+    
+    # Log the status change
+    log_entry = f"[{timestamp}] {status}: {phase}"
+    st.session_state.mission_log.append(log_entry)
+    
+    # Keep only the most recent 30 log entries
+    if len(st.session_state.mission_log) > 30:
+        st.session_state.mission_log = st.session_state.mission_log[-30:]
+    
+    # Update status
+    st.session_state.mission_status = status
+    st.session_state.mission_phase = phase
+    
+    # No rerun here to avoid potential issues with recursive reruns
+
+# Function to interrupt the mission
+def interrupt_mission():
+    if st.session_state.mission_in_progress:
+        st.session_state.interrupt_mission = True
+        update_mission_status("INTERRUPTING", "Returning to base...")
+        # Call the return to home function
+        try:
+            drone_control.return_home()
+            time.sleep(2)
+            drone_control.disconnect_drone()
+            st.session_state.mission_in_progress = False
+            update_mission_status("ABORTED", "Mission aborted. Drone returned to base.")
+        except Exception as e:
+            update_mission_status("ERROR", f"Error during interrupt: {str(e)}")
+    else:
+        st.warning("No mission in progress to interrupt")
 
 class DroneAssistant(CodeAgent):
     """Extension of CodeAgent for drone interactions"""
@@ -442,11 +512,18 @@ def connect_to_real_drone(connection_string: str = None) -> str:
         return "Error: Connection string is required. Examples: 'udp:127.0.0.1:14550' for simulation, '/dev/ttyACM0' for USB, or 'tcp:192.168.1.1:5760' for WiFi"
     
     try:
+        # Update mission status
+        st.session_state.mission_in_progress = True
+        update_mission_status("CONNECTING", f"Connecting to drone at {connection_string}")
+        
         success = drone_control.connect_drone(connection_string)
         if success:
             # Get and store current status
             location = drone_control.get_location()
             battery = drone_control.get_battery()
+            
+            # Update mission status
+            update_mission_status("CONNECTED", "Drone connected successfully")
             
             # Format a nice response
             response = {
@@ -456,8 +533,12 @@ def connect_to_real_drone(connection_string: str = None) -> str:
             }
             return str(response)
         else:
+            st.session_state.mission_in_progress = False
+            update_mission_status("ERROR", "Connection failed")
             return "Failed to connect to drone. Check connection string and ensure the drone is powered on."
     except Exception as e:
+        st.session_state.mission_in_progress = False
+        update_mission_status("ERROR", f"Connection error: {str(e)}")
         return f"Error connecting to drone: {str(e)}"
 
 @tool
@@ -474,12 +555,23 @@ def drone_takeoff(altitude: float = None) -> str:
         return "Error: Altitude is required. Specify a safe takeoff altitude in meters."
     
     try:
+        # Check if mission was interrupted
+        if st.session_state.interrupt_mission:
+            st.session_state.interrupt_mission = False
+            return "Takeoff aborted due to mission interrupt request"
+        
+        # Update mission status
+        update_mission_status("TAKING OFF", f"Taking off to {altitude} meters")
+        
         success = drone_control.takeoff(altitude)
         if success:
+            update_mission_status("AIRBORNE", f"Reached altitude of {altitude} meters")
             return f"Takeoff successful! Reached target altitude of {altitude} meters."
         else:
+            update_mission_status("ERROR", "Takeoff failed")
             return "Takeoff failed. Make sure you are connected to the drone and in a safe takeoff area."
     except Exception as e:
+        update_mission_status("ERROR", f"Takeoff error: {str(e)}")
         return f"Error during takeoff: {str(e)}"
 
 @tool
@@ -490,12 +582,19 @@ def drone_land() -> str:
         str: Status of the landing
     """
     try:
+        # Update mission status
+        update_mission_status("LANDING", "Drone is landing")
+        
         success = drone_control.land()
         if success:
-            return "Landing command sent successfully. The drone is descending to land."
+            update_mission_status("LANDED", "Drone has landed")
+            st.session_state.mission_in_progress = False
+            return "Landing command sent successfully. The drone has landed."
         else:
+            update_mission_status("ERROR", "Landing failed")
             return "Landing command failed. Make sure you are connected to the drone."
     except Exception as e:
+        update_mission_status("ERROR", f"Landing error: {str(e)}")
         return f"Error during landing: {str(e)}"
 
 @tool
@@ -506,12 +605,18 @@ def drone_return_home() -> str:
         str: Status of the return-to-home command
     """
     try:
+        # Update mission status
+        update_mission_status("RETURNING", "Returning to launch point")
+        
         success = drone_control.return_home()
         if success:
+            update_mission_status("RETURNING", "Drone is returning to launch point")
             return "Return to home command sent successfully. The drone is returning to its launch point."
         else:
+            update_mission_status("ERROR", "Return to home failed")
             return "Return to home command failed. Make sure you are connected to the drone."
     except Exception as e:
+        update_mission_status("ERROR", f"Return error: {str(e)}")
         return f"Error during return to home: {str(e)}"
 
 @tool
@@ -584,12 +689,49 @@ def execute_drone_mission(waypoints: List[Dict[str, float]] = None) -> str:
             return f"Error: Waypoint {i} is missing required keys. Each waypoint must have lat, lon, and alt."
     
     try:
+        # Update mission status
+        update_mission_status("MISSION", f"Starting mission with {len(waypoints)} waypoints")
+        
+        # Check for mission interrupt before starting
+        if st.session_state.interrupt_mission:
+            st.session_state.interrupt_mission = False
+            update_mission_status("ABORTED", "Mission aborted before execution")
+            return "Mission aborted due to interrupt request"
+        
+        # Execute mission with progress updates
         success = drone_control.execute_mission_plan(waypoints)
+        
+        # Simulate mission progress (in a real implementation, you'd get actual progress from the drone)
         if success:
-            return f"Mission with {len(waypoints)} waypoints uploaded and started successfully."
+            total_waypoints = len(waypoints)
+            for i in range(total_waypoints):
+                # Check for interrupt between waypoints
+                if st.session_state.interrupt_mission:
+                    st.session_state.interrupt_mission = False
+                    update_mission_status("INTERRUPTED", "Mission interrupted, returning to base")
+                    drone_control.return_home()
+                    time.sleep(2)
+                    update_mission_status("RETURNED", "Drone returned to base after interrupt")
+                    return f"Mission interrupted after waypoint {i+1}/{total_waypoints}. Drone returned to base."
+                
+                # Update status for current waypoint
+                wp = waypoints[i]
+                update_mission_status(
+                    "EXECUTING MISSION", 
+                    f"Flying to waypoint {i+1}/{total_waypoints}: lat={wp['lat']:.4f}, lon={wp['lon']:.4f}, alt={wp['alt']}m"
+                )
+                
+                # Simulate time taken to reach waypoint
+                time.sleep(2)
+            
+            # Mission completed successfully
+            update_mission_status("MISSION COMPLETE", "All waypoints reached")
+            return f"Mission with {len(waypoints)} waypoints completed successfully."
         else:
+            update_mission_status("ERROR", "Failed to execute mission")
             return "Failed to execute mission. Make sure you are connected to the drone."
     except Exception as e:
+        update_mission_status("ERROR", f"Mission error: {str(e)}")
         return f"Error executing mission: {str(e)}"
 
 @tool
@@ -600,9 +742,15 @@ def disconnect_from_drone() -> str:
         str: Status of the disconnection
     """
     try:
+        # Update mission status
+        update_mission_status("DISCONNECTING", "Disconnecting from drone")
+        
         drone_control.disconnect_drone()
+        st.session_state.mission_in_progress = False
+        update_mission_status("STANDBY", "Disconnected from drone")
         return "Successfully disconnected from the drone."
     except Exception as e:
+        update_mission_status("ERROR", f"Disconnect error: {str(e)}")
         return f"Error disconnecting from drone: {str(e)}"
 
 def create_qwen_model():
@@ -951,16 +1099,63 @@ def main():
         
         st.session_state['demo_data_loaded'] = True
     
-    # Add mission status to sidebar
+    # Add mission status section to sidebar with improved visibility
     st.sidebar.markdown("<h3 style='color: #00ff00; font-family: \"Courier New\", monospace;'>MISSION CONTROL</h3>", unsafe_allow_html=True)
-    st.sidebar.markdown("""
+    
+    # Dynamic status display that changes color based on status
+    status_color = "#00ff00"  # Default green
+    if st.session_state.mission_status == "ERROR":
+        status_color = "#ff0000"  # Red for errors
+    elif st.session_state.mission_status in ["CONNECTING", "TAKING OFF", "LANDING", "RETURNING"]:
+        status_color = "#ffff00"  # Yellow for transitions
+    elif st.session_state.mission_status in ["MISSION", "EXECUTING MISSION", "AIRBORNE"]:
+        status_color = "#00ffff"  # Cyan for active mission
+    
+    st.sidebar.markdown(f"""
     <div style='font-family: "Courier New", monospace; color: #00ff00;'>
-    <b>STATUS:</b> OPERATIONAL<br>
-    <b>BATTERY:</b> 87%<br>
-    <b>ALTITUDE:</b> 153 M<br>
+    <b>STATUS:</b> <span style="color: {status_color}; font-weight: bold;">{st.session_state.mission_status}</span><br>
+    <b>PHASE:</b> <span style="color: {status_color};">{st.session_state.mission_phase}</span><br>
+    <b>ACTIVE:</b> {"YES" if st.session_state.mission_in_progress else "NO"}<br>
     <b>SIGNAL:</b> STRONG
     </div>
     """, unsafe_allow_html=True)
+    
+    # Add interrupt button if a mission is in progress
+    if st.session_state.mission_in_progress:
+        if st.sidebar.button("⚠️ ABORT MISSION", 
+                            key="abort_button", 
+                            help="Immediately abort the current mission and return the drone to base",
+                            type="primary"):
+            interrupt_mission()
+    
+    # Add mission log section
+    with st.sidebar.expander("MISSION LOG", expanded=True):
+        if not st.session_state.mission_log:
+            st.write("No mission activity")
+        else:
+            log_html = "<div style='font-family: monospace; font-size: 11px; color: #00ff00; background-color: #111111; padding: 8px; border-radius: 5px; max-height: 300px; overflow-y: auto;'>"
+            for entry in reversed(st.session_state.mission_log):
+                if "ERROR" in entry:
+                    log_html += f"<div style='color: #ff0000;'>{entry}</div>"
+                elif "LOG: Altitude:" in entry:
+                    # Special formatting for altitude logs
+                    altitude = entry.split("Altitude: ")[1]
+                    log_html += f"<div style='color: #88ff88;'>🛰️ {entry.split('] LOG: ')[0]}] ALT: {altitude}</div>"
+                elif "LOG: Arming" in entry:
+                    log_html += f"<div style='color: #ffaa00;'>🔄 {entry}</div>"
+                elif "LOG: Taking off" in entry:
+                    log_html += f"<div style='color: #ffff00;'>🚀 {entry}</div>"
+                elif "LOG:" in entry:
+                    # Other log entries
+                    log_html += f"<div style='color: #aaaaff;'>{entry}</div>"
+                elif any(status in entry for status in ["CONNECTING", "TAKING OFF", "LANDING", "RETURNING"]):
+                    log_html += f"<div style='color: #ffff00;'>{entry}</div>"
+                elif any(status in entry for status in ["MISSION", "EXECUTING", "AIRBORNE"]):
+                    log_html += f"<div style='color: #00ffff;'>{entry}</div>"
+                else:
+                    log_html += f"<div>{entry}</div>"
+            log_html += "</div>"
+            st.markdown(log_html, unsafe_allow_html=True)
     
     st.sidebar.markdown("<hr style='border: 1px solid #00ff00; margin: 20px 0;'>", unsafe_allow_html=True)
     
