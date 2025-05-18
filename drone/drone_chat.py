@@ -885,7 +885,17 @@ def initialize_chat_container():
         st.session_state.chat_container = chat_container
 
 def main():
-    # Don't set page config here, it's already set at the module level
+    # Ensure all session state variables are initialized
+    if 'mission_status' not in st.session_state:
+        st.session_state.mission_status = "STANDBY"
+    if 'mission_phase' not in st.session_state:
+        st.session_state.mission_phase = ""
+    if 'mission_in_progress' not in st.session_state:
+        st.session_state.mission_in_progress = False
+    if 'interrupt_mission' not in st.session_state:
+        st.session_state.interrupt_mission = False
+    if 'mission_log' not in st.session_state:
+        st.session_state.mission_log = []
     
     # Add custom CSS for proper layout
     st.markdown("""
