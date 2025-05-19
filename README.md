@@ -13,6 +13,9 @@ pinned: false
 
 A drone chat agent for drone analytics and operations, built on the smolagents framework with DroneKit integration for real drone control.
 
+![DeepDrone Interface](https://raw.githubusercontent.com/evangelosmeklis/deepdrone/main/media/deepdrone_interface.png)
+![DeepDrone Visualization](https://raw.githubusercontent.com/evangelosmeklis/deepdrone/main/media/deepdrone_visualization.png)
+
 ## Features
 
 - **Drone Chat**: Interact with a drone assistant through a chat interface
@@ -109,4 +112,4 @@ IMPORTANT: Always follow safety guidelines when operating real drones.
 - DroneKit-Python for real drone control
 - Streamlit for the user interface
 - Pandas, Matplotlib and Seaborn for data analysis and visualization
-# Last updated: Mon May 19 11:57:14 EEST 2025
+# Last updated: Mon May 19 12:30:00 EEST 2024
