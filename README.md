@@ -13,8 +13,9 @@ pinned: false
 
 A drone chat agent for drone analytics and operations, built on the smolagents framework with DroneKit integration for real drone control.
 
-![DeepDrone Interface](https://raw.githubusercontent.com/evangelosmeklis/deepdrone/main/media/deepdrone_interface.png)
-![DeepDrone Visualization](https://raw.githubusercontent.com/evangelosmeklis/deepdrone/main/media/deepdrone_visualization.png)
+![DeepDrone Interface](https://i.imgur.com/5ZfQW8i.png)
+![DeepDrone Visualization](https://i.imgur.com/h3zmVIz.png)
+
 
 ## Features
 
