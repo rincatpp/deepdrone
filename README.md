@@ -113,4 +113,5 @@ IMPORTANT: Always follow safety guidelines when operating real drones.
 - DroneKit-Python for real drone control
 - Streamlit for the user interface
 - Pandas, Matplotlib and Seaborn for data analysis and visualization
-# Last updated: Mon May 19 12:30:00 EEST 2024
+
+## Last updated: Mon May 19 17:50:00 EEST 2025
